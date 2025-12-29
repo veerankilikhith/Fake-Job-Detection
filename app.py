@@ -110,9 +110,10 @@ def index():
     if img_file and img_file.filename:
         try:
             image_bytes = img_file.read()
-            img = Image.open(BytesIO(image_bytes))
-            img.verify()
-            text = ""   # OCR will be added in next step
+
+            # OCR using OCR.space
+            text = extract_text_from_image(image_bytes)
+
         except Exception:
             error = "Uploaded file is not a valid image."
             return render_template(
@@ -120,7 +121,6 @@ def index():
                 error=error,
                 greeting=greeting
             )
-
 
         if not text.strip():
             error = "No text detected"
@@ -169,5 +169,6 @@ def index():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+
 
 
