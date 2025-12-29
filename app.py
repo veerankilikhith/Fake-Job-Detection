@@ -1,52 +1,54 @@
 from datetime import datetime
 import os
+import json
 import hashlib
-import requests
 from flask import Flask, render_template, request
 from openai import OpenAI
+from google.cloud import vision
 
 app = Flask(__name__)
 
-# ---- OPENAI ----
+# ================== OPENAI ==================
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     raise RuntimeError("OPENAI_API_KEY not set")
 
 client = OpenAI(api_key=api_key)
 
-# ---- CACHE ----
+# ================== GOOGLE VISION OCR ==================
+def extract_text_from_image(image_bytes):
+    try:
+        credentials_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
+        if not credentials_json:
+            return ""
+
+        credentials = json.loads(credentials_json)
+        vision_client = vision.ImageAnnotatorClient.from_service_account_info(
+            credentials
+        )
+
+        image = vision.Image(content=image_bytes)
+        response = vision_client.text_detection(image=image)
+
+        if response.error.message:
+            return ""
+
+        texts = response.text_annotations
+        if texts:
+            return texts[0].description.lower()
+
+        return ""
+    except Exception as e:
+        print("OCR error:", e)
+        return ""
+
+# ================== CACHE ==================
 ai_cache = {}
 
 def cache_key(text: str) -> str:
     return hashlib.sha256(text.strip().lower().encode()).hexdigest()
 
-# ---- OCR FUNCTION (OCR.space) ----
-def extract_text_from_image(image_bytes):
-    try:
-        response = requests.post(
-            "https://api.ocr.space/parse/image",
-            files={"file": image_bytes},
-            data={
-                "apikey": "helloworld",  # free demo key
-                "language": "eng"
-            },
-            timeout=30
-        )
-
-        result = response.json()
-
-        if result.get("IsErroredOnProcessing"):
-            return ""
-
-        parsed = result.get("ParsedResults")
-        if parsed and len(parsed) > 0:
-            return parsed[0].get("ParsedText", "").lower()
-
-        return ""
-    except Exception:
-        return ""
-
-# ---- DATA ----
+# ================== DATA ==================
 suspicious_phrases = [
     "registration fee", "application fee", "training fee", "deposit", "pay",
     "apply immediately", "limited seats", "urgent hiring",
@@ -62,6 +64,7 @@ risk_tips = {
     "no interview": "Skipping interviews is a red flag."
 }
 
+# ================== AI EXPLANATION ==================
 def ai_explanation(text, risk, reasons):
     prompt = f"""
 Risk Level: {risk}
@@ -77,9 +80,9 @@ Explain simply:
         messages=[{"role": "user", "content": prompt}],
         max_tokens=120
     )
-    return res.choices[0].message.content.replace("###", "").strip()
+    return res.choices[0].message.content.strip()
 
-# ---- ROUTE ----
+# ================== ROUTE ==================
 @app.route("/", methods=["GET", "POST"])
 def index():
     result = None
@@ -97,11 +100,11 @@ def index():
     if request.method == "POST":
         text = ""
 
-        # TEXT INPUT
+        # -------- TEXT INPUT --------
         if request.form.get("job_text", "").strip():
             text = request.form["job_text"].strip().lower()
 
-        # IMAGE INPUT
+        # -------- IMAGE INPUT --------
         elif "job_image" in request.files:
             img_file = request.files["job_image"]
 
@@ -117,7 +120,7 @@ def index():
                 greeting=greeting
             )
 
-        # ---- RISK ANALYSIS ----
+        # -------- RISK ANALYSIS --------
         score = 0
         reasons = []
 
@@ -154,5 +157,6 @@ def index():
         greeting=greeting
     )
 
+# ================== RUN ==================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
