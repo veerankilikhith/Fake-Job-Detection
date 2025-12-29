@@ -1,0 +1,368 @@
+* {
+    box-sizing: border-box;
+}
+
+/* ---------- GLOBAL ---------- */
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #eef2ff, #f8fafc);
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 950px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+/* ---------- HERO ---------- */
+.hero {
+    display: grid;
+    row-gap: 16px;
+    margin-bottom: 40px;
+}
+
+.hero-center {
+    text-align: center;
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.hero-center h1 {
+    font-size: 34px;
+    font-weight: 700;
+    color: #4f46e5;
+    margin-bottom: 12px;
+}
+
+.hero-center p {
+    font-size: 16px;
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+.hero-greeting {
+    margin-top: 10px;
+}
+
+.greeting-text {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* ---------- CARD ---------- */
+.card {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 25px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+    margin-bottom: 25px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 26px rgba(0,0,0,0.18);
+}
+
+/* ---------- TEXTAREA (FIXED PLACEHOLDER + CURSOR) ---------- */
+textarea {
+    width: 100%;
+    height: 160px;
+
+    padding: 14px 16px;          /* proper spacing */
+    border-radius: 12px;
+    border: 2px solid #6366f1;
+
+    font-size: 15px;
+    line-height: 1.5;
+
+    resize: none;
+
+    text-align: left;
+    vertical-align: top;
+
+    background: #ffffff;
+    color: #111827;              /* text color */
+}
+/* Placeholder visibility FIX */
+textarea::placeholder {
+    color: #9ca3af;              /* visible gray */
+    opacity: 1;                  /* REQUIRED (Chrome bug fix) */
+}
+
+/* ---------- INPUT FOCUS GLOW ---------- */
+textarea:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
+    outline: none;
+}
+
+/* ---------- BUTTONS (POP + PRESS) ---------- */
+button {
+    margin-top: 14px;
+    padding: 12px 26px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow:
+        0 6px 15px rgba(99,102,241,0.45),
+        inset 0 -2px 0 rgba(0,0,0,0.15);
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease,
+        filter 0.15s ease;
+}
+/* ---------- TOUCH RIPPLE EFFECT ---------- */
+button {
+    position: relative;
+    overflow: hidden;
+}
+
+button .ripple {
+    position: absolute;
+    border-radius: 50%;
+    transform: scale(0);
+    animation: rippleEffect 600ms linear;
+    background-color: rgba(255, 255, 255, 0.5);
+    pointer-events: none;
+}
+
+@keyframes rippleEffect {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+
+/* POP UP */
+button:hover {
+    transform: translateY(-3px) scale(1.04);
+    box-shadow:
+        0 12px 26px rgba(99,102,241,0.5),
+        inset 0 -2px 0 rgba(0,0,0,0.2);
+    filter: brightness(1.05);
+}
+
+/* PRESS DOWN */
+button:active {
+    transform: translateY(2px) scale(0.97);
+    box-shadow:
+        0 4px 10px rgba(99,102,241,0.35),
+        inset 0 3px 6px rgba(0,0,0,0.3);
+}
+
+/* Toggle buttons spacing */
+.toggle-buttons button {
+    margin-right: 10px;
+}
+
+/* ---------- TRUST ---------- */
+.trust {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 600;
+    background: #dcfce7;
+    color: #166534;
+}
+
+/* ---------- RISK BAR ---------- */
+.risk-container {
+    background: #e5e7eb;
+    border-radius: 20px;
+    height: 26px;
+    overflow: hidden;
+    margin: 14px 0;
+}
+
+.risk-bar {
+    height: 26px;
+    border-radius: 20px;
+    animation: fillBar 1.2s ease forwards;
+}
+
+.low {
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.medium {
+    background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.high {
+    background: linear-gradient(90deg, #ef4444, #b91c1c);
+}
+
+/* ---------- REASON (BUMPY) ---------- */
+.reason {
+    padding: 14px 18px;
+    border-radius: 14px;
+    margin: 12px 0;
+    font-size: 14px;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+}
+
+.reason.low {
+    background: #ecfdf5;
+    border-left: 6px solid #22c55e;
+}
+
+.reason.medium {
+    background: #fff7ed;
+    border-left: 6px solid #f59e0b;
+}
+
+.reason.high {
+    background: #fef2f2;
+    border-left: 6px solid #ef4444;
+}
+
+.reason:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 26px rgba(0,0,0,0.2);
+}
+
+.reason:active {
+    transform: translateY(2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+/* ---------- AI BOX ---------- */
+.ai-box {
+    background: #eef2ff;
+    border-left: 6px solid #4f46e5;
+    padding: 14px;
+    border-radius: 12px;
+    margin-top: 15px;
+}
+
+/* ---------- LOADER ---------- */
+.spinner {
+    width: 22px;
+    height: 22px;
+    border: 4px solid #e5e7eb;
+    border-top: 4px solid #6366f1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    margin-right: 6px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes fillBar {
+    from {
+        width: 0%;
+    }
+    to {
+        width: var(--width);
+    }
+}
+
+/* ---------- FADE-IN ---------- */
+.fade-in {
+    animation: fadeInUp 0.6s ease both;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ---------- RESET ICON (GREEN + GLOW + PULSE) ---------- */
+.reset-icon {
+    color: #22c55e;
+    margin-right: 6px;
+    display: inline-block;
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.reset-btn:hover .reset-icon {
+    animation: pulseGreen 1s infinite;
+    filter: drop-shadow(0 0 8px rgba(34,197,94,0.9));
+}
+
+@keyframes pulseGreen {
+    0% {
+        transform: scale(1) rotate(0deg);
+    }
+    50% {
+        transform: scale(1.25) rotate(180deg);
+    }
+    100% {
+        transform: scale(1) rotate(360deg);
+    }
+}
+
+/* ---------- FOOTER ---------- */
+.footer {
+    margin-top: 50px;
+    padding: 18px 0 8px 0;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+    font-size: 13px;
+    color: #6b7280;
+}
+@media (max-width: 768px) {
+
+    .container {
+        margin: 20px;
+        padding: 14px;
+    }
+
+    .hero-center h1 {
+        font-size: 26px;
+    }
+
+    .toggle-buttons button,
+    .action-buttons button {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    textarea {
+        height: 180px;
+    }
+}
+textarea {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+/* Greeting just above white card */
+.above-card-greeting {
+    margin: 10px 0 14px 6px;   /* space above & below */
+}
+
+.above-card-greeting .greeting-text {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+}
+/* File name display */
+.file-name {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #4b5563;
+    font-style: italic;
+}
+
+
