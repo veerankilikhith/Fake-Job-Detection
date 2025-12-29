@@ -1,11 +1,9 @@
 from datetime import datetime
-import requests
 import os
 import hashlib
+import requests
 from flask import Flask, render_template, request
 from openai import OpenAI
-from PIL import Image
-from io import BytesIO
 
 app = Flask(__name__)
 
@@ -21,8 +19,9 @@ ai_cache = {}
 
 def cache_key(text: str) -> str:
     return hashlib.sha256(text.strip().lower().encode()).hexdigest()
-    
-    def extract_text_from_image(image_bytes):
+
+# ---- OCR FUNCTION (OCR.space) ----
+def extract_text_from_image(image_bytes):
     try:
         response = requests.post(
             "https://api.ocr.space/parse/image",
@@ -46,7 +45,6 @@ def cache_key(text: str) -> str:
         return ""
     except Exception:
         return ""
-
 
 # ---- DATA ----
 suspicious_phrases = [
@@ -87,7 +85,7 @@ def index():
     result = None
     error = None
 
-    # 🌞 Greeting (DO NOT CHANGE – already correct)
+    # Greeting
     hour = datetime.now().hour
     if hour < 12:
         greeting = "🌅 Good Morning"
@@ -105,22 +103,11 @@ def index():
 
         # IMAGE INPUT
         elif "job_image" in request.files:
-    img_file = request.files["job_image"]
+            img_file = request.files["job_image"]
 
-    if img_file and img_file.filename:
-        try:
-            image_bytes = img_file.read()
-
-            # OCR using OCR.space
-            text = extract_text_from_image(image_bytes)
-
-        except Exception:
-            error = "Uploaded file is not a valid image."
-            return render_template(
-                "index.html",
-                error=error,
-                greeting=greeting
-            )
+            if img_file and img_file.filename:
+                image_bytes = img_file.read()
+                text = extract_text_from_image(image_bytes)
 
         if not text.strip():
             error = "No text detected"
@@ -169,6 +156,3 @@ def index():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
-
-
-
