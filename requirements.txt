@@ -3,3 +3,5 @@ openai
 pillow
 pytesseract
 gunicorn
+requests
+
