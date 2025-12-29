@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Job Risk Detection System</title>
+
+    <!-- CSS (DO NOT REMOVE) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=3">
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ================= HERO SECTION ================= -->
+    <div class="hero">
+
+        <!-- CENTER TITLE -->
+        <div class="hero-center">
+            <h1>🛡️ AI-Based Fake Internship & Job Detection System</h1>
+            <p>
+                This website helps students identify fake or suspicious job and internship
+                postings. Paste a job description below and click
+                <b>Analyze Risk</b>.
+            </p>
+        </div>
+    </div>
+    <!-- ================= END HERO ================= -->
+<!-- GREETING ABOVE WHITE CARD -->
+<div class="above-card-greeting">
+    <h3 class="greeting-text">👋 Hi, {{ greeting }}!</h3>
+</div>
+
+
+
+    <!-- ================= INPUT CARD ================= -->
+    
+    <div class="card">
+        <h4>📥 Choose Input Method</h4>
+
+        <div class="toggle-buttons">
+            <button type="button" class="ripple-btn" onclick="showText()">📝 Text Description</button>
+	    <button type="button" onclick="showImage(); triggerFile()">🖼️ Upload Image</button>
+
+        </div>
+
+        <form method="POST"
+              enctype="multipart/form-data"
+              id="analyzeForm"
+              onsubmit="startAnalyzing()">
+
+            <!-- TEXT INPUT -->
+            <div id="textBox">
+    <textarea
+        name="job_text"
+        id="jobText"
+        placeholder="Paste job or internship description here..."
+    >{{ request.form.job_text or '' }}</textarea>
+</div>
+
+
+            <!-- IMAGE INPUT -->
+            <div id="imageBox" style="display:none;">
+    <input type="file" id="jobImage" name="job_image" hidden>
+    <p class="file-name" id="fileName">No file selected</p>
+</div>
+
+
+            <br>
+
+            <!-- ACTION BUTTONS -->
+            <div class="action-buttons">
+                <button type="submit" id="analyzeBtn" class="ripple-btn">
+                    🔍 Analyze Risk
+		</button>
+
+
+                <button type="button" class="reset-btn" onclick="resetAll()">
+                    <span class="reset-icon">♻</span> Reset
+                </button>
+            </div>
+
+        </form>
+
+        {% if error %}
+            <p class="error-text">{{ error }}</p>
+        {% endif %}
+
+    </div>
+    <!-- ================= END INPUT CARD ================= -->
+
+
+    <!-- ================= RESULT CARD ================= -->
+    {% if result %}
+    <div class="card fade-in">
+
+        <h3>Risk Level: {{ result.risk }}</h3>
+
+        <div class="trust">
+            🔎 Trust Score: {{ result.trust }}%
+        </div>
+
+        <div class="risk-container">
+            <div class="risk-bar {{ result.class }}"
+                 style="--width: {{ result.meter }}%;"></div>
+        </div>
+
+        <h4>⚠ Why this is risky (Rule-Based)</h4>
+
+        {% for r in result.reasons %}
+            <div class="reason {{ result.class }}">
+                ⚠ <b>{{ r }}</b><br>
+                {{ result.tips.get(r, '') }}
+            </div>
+        {% endfor %}
+
+        <!-- AI Explanation -->
+        <div class="ai-box">
+            <h4>🧠 AI Explanation (ChatGPT)</h4>
+
+            <p id="aiLoading">
+                <span class="spinner"></span>
+                Generating AI explanation…
+            </p>
+
+            <p id="aiText" style="display:none;">
+                {{ result.ai }}
+            </p>
+        </div>
+
+    </div>
+    {% endif %}
+    <!-- ================= END RESULT CARD ================= -->
+
+
+    <!-- ================= FOOTER ================= -->
+    <div class="footer">
+        ⚠ This tool provides a preliminary risk assessment.
+        Always verify jobs through official channels.
+        <br><br>
+        © 2025 Fake Internship & Job Detection System
+    </div>
+
+</div>
+
+<!-- ================= JAVASCRIPT ================= -->
+<script>
+function showText() {
+    const textBox = document.getElementById("textBox");
+    const imageBox = document.getElementById("imageBox");
+    const textarea = document.getElementById("jobText");
+
+    textBox.style.display = "block";
+    imageBox.style.display = "none";
+
+    // 🔑 Allow placeholder to appear
+    if (!textarea.value.trim()) {
+        textarea.value = "";
+    }
+
+    textarea.focus();
+}
+
+function showImage() {
+    document.getElementById("textBox").style.display = "none";
+    document.getElementById("imageBox").style.display = "block";
+}
+
+function startAnalyzing() {
+    const btn = document.getElementById("analyzeBtn");
+    btn.innerHTML = "⏳ Analyzing...";
+    btn.disabled = true;
+}
+
+function resetAll() {
+    window.location.href = "/";
+}
+
+window.onload = function () {
+    const aiText = document.getElementById("aiText");
+    const aiLoading = document.getElementById("aiLoading");
+
+    if (aiText && aiLoading) {
+        setTimeout(() => {
+            aiLoading.style.display = "none";
+            aiText.style.display = "block";
+        }, 900);
+    }
+};
+
+// ---------- SAFE RIPPLE EFFECT ----------
+document.querySelectorAll(".ripple-btn").forEach(button => {
+    button.addEventListener("click", function (e) {
+        const ripple = document.createElement("span");
+        ripple.className = "ripple";
+
+        const rect = this.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+
+        ripple.style.width = ripple.style.height = size + "px";
+        ripple.style.left = e.clientX - rect.left - size / 2 + "px";
+        ripple.style.top = e.clientY - rect.top - size / 2 + "px";
+
+        this.appendChild(ripple);
+
+        setTimeout(() => ripple.remove(), 600);
+    });
+});
+function triggerFile() {
+    document.getElementById("jobImage").click();
+}
+
+document.addEventListener("change", function (e) {
+    if (e.target.id === "jobImage") {
+        const fileName = e.target.files[0]
+            ? e.target.files[0].name
+            : "No file selected";
+        document.getElementById("fileName").innerText = fileName;
+    }
+});
+
+
+</script>
+</body>
+</html>
