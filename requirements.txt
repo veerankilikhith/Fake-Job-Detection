@@ -4,4 +4,7 @@ pillow
 pytesseract
 gunicorn
 requests
+google-cloud-vision
+
+
 
