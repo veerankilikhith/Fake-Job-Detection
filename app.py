@@ -7,9 +7,6 @@ from PIL import Image
 import pytesseract
 from io import BytesIO
 
-# ---- CONFIG ----
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-
 app = Flask(__name__)
 
 # ---- OPENAI ----
@@ -83,10 +80,21 @@ def index():
         # IMAGE INPUT
         elif "job_image" in request.files:
             img_file = request.files["job_image"]
-            if img_file.filename:
+
+            if img_file and img_file.filename:
                 try:
-                    img = Image.open(BytesIO(img_file.read()))
-                    text = pytesseract.image_to_string(img).lower()
+            # Validate image
+                    image_bytes = img_file.read()
+                    img = Image.open(BytesIO(image_bytes))
+                    img.verify()
+
+            # Try OCR (may fail on cloud)
+                    try:
+                        img = Image.open(BytesIO(image_bytes))
+                        text = pytesseract.image_to_string(img).lower()
+                    except Exception:
+                        text = ""
+
                 except Exception:
                     error = "Uploaded file is not a valid image."
                     return render_template(
@@ -142,3 +150,4 @@ def index():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+
