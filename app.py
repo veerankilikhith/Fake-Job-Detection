@@ -1,10 +1,10 @@
 from datetime import datetime
+import requests
 import os
 import hashlib
 from flask import Flask, render_template, request
 from openai import OpenAI
 from PIL import Image
-import pytesseract
 from io import BytesIO
 
 app = Flask(__name__)
@@ -21,6 +21,32 @@ ai_cache = {}
 
 def cache_key(text: str) -> str:
     return hashlib.sha256(text.strip().lower().encode()).hexdigest()
+    
+    def extract_text_from_image(image_bytes):
+    try:
+        response = requests.post(
+            "https://api.ocr.space/parse/image",
+            files={"file": image_bytes},
+            data={
+                "apikey": "helloworld",  # free demo key
+                "language": "eng"
+            },
+            timeout=30
+        )
+
+        result = response.json()
+
+        if result.get("IsErroredOnProcessing"):
+            return ""
+
+        parsed = result.get("ParsedResults")
+        if parsed and len(parsed) > 0:
+            return parsed[0].get("ParsedText", "").lower()
+
+        return ""
+    except Exception:
+        return ""
+
 
 # ---- DATA ----
 suspicious_phrases = [
@@ -79,29 +105,22 @@ def index():
 
         # IMAGE INPUT
         elif "job_image" in request.files:
-            img_file = request.files["job_image"]
+    img_file = request.files["job_image"]
 
-            if img_file and img_file.filename:
-                try:
-            # Validate image
-                    image_bytes = img_file.read()
-                    img = Image.open(BytesIO(image_bytes))
-                    img.verify()
+    if img_file and img_file.filename:
+        try:
+            image_bytes = img_file.read()
+            img = Image.open(BytesIO(image_bytes))
+            img.verify()
+            text = ""   # OCR will be added in next step
+        except Exception:
+            error = "Uploaded file is not a valid image."
+            return render_template(
+                "index.html",
+                error=error,
+                greeting=greeting
+            )
 
-            # Try OCR (may fail on cloud)
-                    try:
-                        img = Image.open(BytesIO(image_bytes))
-                        text = pytesseract.image_to_string(img).lower()
-                    except Exception:
-                        text = ""
-
-                except Exception:
-                    error = "Uploaded file is not a valid image."
-                    return render_template(
-                        "index.html",
-                        error=error,
-                        greeting=greeting
-                    )
 
         if not text.strip():
             error = "No text detected"
@@ -150,4 +169,5 @@ def index():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+
 
