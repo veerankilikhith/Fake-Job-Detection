@@ -6,6 +6,7 @@ from flask import Flask, render_template, request
 from openai import OpenAI
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5MB image limit
 
 # ================= OPENAI =================
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -18,6 +19,7 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 OCR_SPACE_API_KEY = os.getenv("OCR_SPACE_API_KEY")
 if not OCR_SPACE_API_KEY:
     raise RuntimeError("OCR_SPACE_API_KEY not set")
+
 
 def extract_text_from_image(image_bytes):
     try:
@@ -34,24 +36,27 @@ def extract_text_from_image(image_bytes):
 
         result = response.json()
 
+        # Handle API error
         if result.get("IsErroredOnProcessing"):
             print("OCR Error:", result.get("ErrorMessage"))
             return ""
 
-        parsed_results = result.get("ParsedResults")
-        if parsed_results and len(parsed_results) > 0:
-            return parsed_results[0].get("ParsedText", "").lower()
+        parsed = result.get("ParsedResults")
+        if parsed and len(parsed) > 0:
+            return parsed[0].get("ParsedText", "").strip().lower()
 
         return ""
     except Exception as e:
         print("OCR Exception:", e)
         return ""
 
+
 # ================= CACHE =================
 ai_cache = {}
 
 def cache_key(text: str) -> str:
     return hashlib.sha256(text.strip().lower().encode()).hexdigest()
+
 
 # ================= DATA =================
 suspicious_phrases = [
@@ -69,6 +74,7 @@ risk_tips = {
     "no interview": "Skipping interviews is a red flag."
 }
 
+
 # ================= AI EXPLANATION =================
 def ai_explanation(text, risk, reasons):
     prompt = f"""
@@ -76,9 +82,9 @@ Risk Level: {risk}
 Suspicious indicators: {', '.join(reasons) if reasons else 'None'}
 
 Explain simply:
-- Why this job is risky
-- What students should check
-- One safety tip
+• Why this job is risky
+• What students should check
+• One safety tip
 """
     response = client.chat.completions.create(
         model="gpt-4o-mini",
@@ -86,6 +92,7 @@ Explain simply:
         max_tokens=120
     )
     return response.choices[0].message.content.strip()
+
 
 # ================= ROUTE =================
 @app.route("/", methods=["GET", "POST"])
@@ -105,19 +112,19 @@ def index():
     if request.method == "POST":
         text = ""
 
-        # TEXT INPUT
+        # ---- TEXT INPUT ----
         job_text = request.form.get("job_text", "").strip()
         if job_text:
             text = job_text.lower()
 
-        # IMAGE INPUT
-        elif "job_image" in request.files:
+        # ---- IMAGE INPUT (ONLY if text empty) ----
+        if not text and "job_image" in request.files:
             img_file = request.files["job_image"]
             if img_file and img_file.filename:
                 image_bytes = img_file.read()
                 text = extract_text_from_image(image_bytes)
 
-        if not text.strip():
+        if not text:
             error = "No text detected"
             return render_template(
                 "index.html",
@@ -125,7 +132,7 @@ def index():
                 greeting=greeting
             )
 
-        # RISK ANALYSIS
+        # ---- RISK ANALYSIS ----
         score = 0
         reasons = []
 
@@ -161,6 +168,7 @@ def index():
         error=error,
         greeting=greeting
     )
+
 
 # ================= RUN =================
 if __name__ == "__main__":
