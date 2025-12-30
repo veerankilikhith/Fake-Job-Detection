@@ -4,7 +4,6 @@ import hashlib
 import requests
 from flask import Flask, render_template, request
 from openai import OpenAI
-from PIL import Image
 import io
 
 app = Flask(__name__)
@@ -195,4 +194,5 @@ def index():
 # ================= RUN =================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+
 
