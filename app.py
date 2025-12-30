@@ -24,29 +24,9 @@ if not OCR_SPACE_API_KEY:
 
 def extract_text_from_image(image_bytes):
     try:
-        # ---- Resize & compress image (OCR.space limit = 1MB) ----
-        image = Image.open(io.BytesIO(image_bytes))
-
-        # Convert to RGB (required for JPEG)
-        if image.mode != "RGB":
-            image = image.convert("RGB")
-
-        # Resize if too large
-        max_width = 1200
-        if image.width > max_width:
-            ratio = max_width / image.width
-            new_height = int(image.height * ratio)
-            image = image.resize((max_width, new_height))
-
-        # Save compressed image to memory
-        buffer = io.BytesIO()
-        image.save(buffer, format="JPEG", quality=70)
-        buffer.seek(0)
-
-        # ---- Send to OCR.space ----
         response = requests.post(
             "https://api.ocr.space/parse/image",
-            files={"file": ("image.jpg", buffer.getvalue())},
+            files={"file": ("image.png", image_bytes)},
             data={
                 "apikey": OCR_SPACE_API_KEY,
                 "language": "eng",
@@ -66,10 +46,10 @@ def extract_text_from_image(image_bytes):
             return parsed_results[0].get("ParsedText", "").lower()
 
         return ""
-
     except Exception as e:
         print("OCR Exception:", e)
         return ""
+
 
 
 # ================= CACHE =================
@@ -194,5 +174,6 @@ def index():
 # ================= RUN =================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+
 
 
