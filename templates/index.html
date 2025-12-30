@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>AI Job Risk Detection System</title>
 
-    <!-- CSS (DO NOT REMOVE) -->
+    <!-- CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=3">
 </head>
 
@@ -12,10 +12,8 @@
 
 <div class="container">
 
-    <!-- ================= HERO SECTION ================= -->
+    <!-- ================= HERO ================= -->
     <div class="hero">
-
-        <!-- CENTER TITLE -->
         <div class="hero-center">
             <h1>🛡️ AI-Based Fake Internship & Job Detection System</h1>
             <p>
@@ -25,23 +23,19 @@
             </p>
         </div>
     </div>
-    <!-- ================= END HERO ================= -->
-<!-- GREETING ABOVE WHITE CARD -->
-<div class="above-card-greeting">
-    <h3 class="greeting-text">👋 Hi, {{ greeting }}!</h3>
-</div>
 
-
+    <!-- GREETING -->
+    <div class="above-card-greeting">
+        <h3 class="greeting-text">👋 {{ greeting }}</h3>
+    </div>
 
     <!-- ================= INPUT CARD ================= -->
-    
     <div class="card">
         <h4>📥 Choose Input Method</h4>
 
         <div class="toggle-buttons">
             <button type="button" class="ripple-btn" onclick="showText()">📝 Text Description</button>
-	    <button type="button" onclick="showImage(); triggerFile()">🖼️ Upload Image</button>
-
+            <button type="button" class="ripple-btn" onclick="showImage(); triggerFile()">🖼️ Upload Image</button>
         </div>
 
         <form method="POST"
@@ -51,20 +45,18 @@
 
             <!-- TEXT INPUT -->
             <div id="textBox">
-    <textarea
-        name="job_text"
-        id="jobText"
-        placeholder="Paste job or internship description here..."
-    >{{ request.form.job_text or '' }}</textarea>
-</div>
-
+                <textarea
+                    name="job_text"
+                    id="jobText"
+                    placeholder="Paste job or internship description here..."
+                >{{ request.form.job_text or '' }}</textarea>
+            </div>
 
             <!-- IMAGE INPUT -->
             <div id="imageBox" style="display:none;">
-    <input type="file" id="jobImage" name="job_image" hidden>
-    <p class="file-name" id="fileName">No file selected</p>
-</div>
-
+                <input type="file" id="jobImage" name="job_image" accept="image/*" hidden>
+                <p class="file-name" id="fileName">No file selected</p>
+            </div>
 
             <br>
 
@@ -72,28 +64,22 @@
             <div class="action-buttons">
                 <button type="submit" id="analyzeBtn" class="ripple-btn">
                     🔍 Analyze Risk
-		</button>
-
+                </button>
 
                 <button type="button" class="reset-btn" onclick="resetAll()">
-                    <span class="reset-icon">♻</span> Reset
+                    ♻ Reset
                 </button>
             </div>
-
         </form>
 
         {% if error %}
             <p class="error-text">{{ error }}</p>
         {% endif %}
-
     </div>
-    <!-- ================= END INPUT CARD ================= -->
 
-
-    <!-- ================= RESULT CARD ================= -->
+    <!-- ================= RESULT ================= -->
     {% if result %}
     <div class="card fade-in">
-
         <h3>Risk Level: {{ result.risk }}</h3>
 
         <div class="trust">
@@ -105,7 +91,7 @@
                  style="--width: {{ result.meter }}%;"></div>
         </div>
 
-        <h4>⚠ Why this is risky (Rule-Based)</h4>
+        <h4>⚠ Why this is risky</h4>
 
         {% for r in result.reasons %}
             <div class="reason {{ result.class }}">
@@ -114,9 +100,8 @@
             </div>
         {% endfor %}
 
-        <!-- AI Explanation -->
         <div class="ai-box">
-            <h4>🧠 AI Explanation (ChatGPT)</h4>
+            <h4>🧠 AI Explanation</h4>
 
             <p id="aiLoading">
                 <span class="spinner"></span>
@@ -127,11 +112,8 @@
                 {{ result.ai }}
             </p>
         </div>
-
     </div>
     {% endif %}
-    <!-- ================= END RESULT CARD ================= -->
-
 
     <!-- ================= FOOTER ================= -->
     <div class="footer">
@@ -146,24 +128,18 @@
 <!-- ================= JAVASCRIPT ================= -->
 <script>
 function showText() {
-    const textBox = document.getElementById("textBox");
-    const imageBox = document.getElementById("imageBox");
-    const textarea = document.getElementById("jobText");
-
-    textBox.style.display = "block";
-    imageBox.style.display = "none";
-
-    // 🔑 Allow placeholder to appear
-    if (!textarea.value.trim()) {
-        textarea.value = "";
-    }
-
-    textarea.focus();
+    document.getElementById("textBox").style.display = "block";
+    document.getElementById("imageBox").style.display = "none";
+    document.getElementById("jobText").focus();
 }
 
 function showImage() {
     document.getElementById("textBox").style.display = "none";
     document.getElementById("imageBox").style.display = "block";
+}
+
+function triggerFile() {
+    document.getElementById("jobImage").click();
 }
 
 function startAnalyzing() {
@@ -176,6 +152,7 @@ function resetAll() {
     window.location.href = "/";
 }
 
+// Show AI explanation after delay
 window.onload = function () {
     const aiText = document.getElementById("aiText");
     const aiLoading = document.getElementById("aiLoading");
@@ -188,12 +165,19 @@ window.onload = function () {
     }
 };
 
-// ---------- SAFE RIPPLE EFFECT ----------
+// File name display
+document.addEventListener("change", function (e) {
+    if (e.target.id === "jobImage") {
+        document.getElementById("fileName").innerText =
+            e.target.files.length ? e.target.files[0].name : "No file selected";
+    }
+});
+
+// Ripple effect
 document.querySelectorAll(".ripple-btn").forEach(button => {
     button.addEventListener("click", function (e) {
         const ripple = document.createElement("span");
         ripple.className = "ripple";
-
         const rect = this.getBoundingClientRect();
         const size = Math.max(rect.width, rect.height);
 
@@ -202,24 +186,10 @@ document.querySelectorAll(".ripple-btn").forEach(button => {
         ripple.style.top = e.clientY - rect.top - size / 2 + "px";
 
         this.appendChild(ripple);
-
         setTimeout(() => ripple.remove(), 600);
     });
 });
-function triggerFile() {
-    document.getElementById("jobImage").click();
-}
-
-document.addEventListener("change", function (e) {
-    if (e.target.id === "jobImage") {
-        const fileName = e.target.files[0]
-            ? e.target.files[0].name
-            : "No file selected";
-        document.getElementById("fileName").innerText = fileName;
-    }
-});
-
-
 </script>
+
 </body>
 </html>
