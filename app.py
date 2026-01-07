@@ -4,62 +4,44 @@ import hashlib
 import requests
 from flask import Flask, render_template, request
 from openai import OpenAI
-import io
 
 app = Flask(__name__)
-app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5MB image limit
 
-# ================= OPENAI =================
+# ---------- OPENAI ----------
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
     raise RuntimeError("OPENAI_API_KEY not set")
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-# ================= OCR.SPACE =================
+# ---------- OCR.SPACE ----------
 OCR_SPACE_API_KEY = os.getenv("OCR_SPACE_API_KEY")
 if not OCR_SPACE_API_KEY:
     raise RuntimeError("OCR_SPACE_API_KEY not set")
 
-
 def extract_text_from_image(image_bytes):
-    try:
-        response = requests.post(
-            "https://api.ocr.space/parse/image",
-            files={"file": ("image.png", image_bytes)},
-            data={
-                "apikey": OCR_SPACE_API_KEY,
-                "language": "eng",
-                "isOverlayRequired": False
-            },
-            timeout=30
-        )
+    response = requests.post(
+        "https://api.ocr.space/parse/image",
+        files={"file": ("job.png", image_bytes)},
+        data={
+            "apikey": OCR_SPACE_API_KEY,
+            "language": "eng"
+        }
+    )
 
-        result = response.json()
+    data = response.json()
+    if "ParsedResults" in data and data["ParsedResults"]:
+        return data["ParsedResults"][0]["ParsedText"].lower()
 
-        if result.get("IsErroredOnProcessing"):
-            print("OCR Error:", result.get("ErrorMessage"))
-            return ""
+    return ""
 
-        parsed_results = result.get("ParsedResults")
-        if parsed_results:
-            return parsed_results[0].get("ParsedText", "").lower()
-
-        return ""
-    except Exception as e:
-        print("OCR Exception:", e)
-        return ""
-
-
-
-# ================= CACHE =================
+# ---------- CACHE ----------
 ai_cache = {}
 
 def cache_key(text: str) -> str:
     return hashlib.sha256(text.strip().lower().encode()).hexdigest()
 
-
-# ================= DATA =================
+# ---------- DATA ----------
 suspicious_phrases = [
     "registration fee", "application fee", "training fee", "deposit", "pay",
     "apply immediately", "limited seats", "urgent hiring",
@@ -75,8 +57,6 @@ risk_tips = {
     "no interview": "Skipping interviews is a red flag."
 }
 
-
-# ================= AI EXPLANATION =================
 def ai_explanation(text, risk, reasons):
     prompt = f"""
 Risk Level: {risk}
@@ -87,21 +67,20 @@ Explain simply:
 • What students should check
 • One safety tip
 """
-    response = client.chat.completions.create(
+    res = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role": "user", "content": prompt}],
         max_tokens=120
     )
-    return response.choices[0].message.content.strip()
+    return res.choices[0].message.content.replace("###", "").strip()
 
-
-# ================= ROUTE =================
+# ---------- ROUTE ----------
 @app.route("/", methods=["GET", "POST"])
 def index():
     result = None
     error = None
 
-    # Greeting
+    # 🌞 Greeting (UNCHANGED)
     hour = datetime.now().hour
     if hour < 12:
         greeting = "🌅 Good Morning"
@@ -114,19 +93,18 @@ def index():
         text = ""
 
         # ---- TEXT INPUT ----
-        job_text = request.form.get("job_text", "").strip()
-        if job_text:
-            text = job_text.lower()
+        if request.form.get("job_text", "").strip():
+            text = request.form["job_text"].strip().lower()
 
-        # ---- IMAGE INPUT (ONLY if text empty) ----
-        if not text and "job_image" in request.files:
+        # ---- IMAGE INPUT ----
+        elif "job_image" in request.files:
             img_file = request.files["job_image"]
-            if img_file and img_file.filename:
+            if img_file.filename:
                 image_bytes = img_file.read()
                 text = extract_text_from_image(image_bytes)
 
-        if not text:
-            error = "No text detected"
+        if not text.strip():
+            error = "No text detected from input."
             return render_template(
                 "index.html",
                 error=error,
@@ -170,10 +148,5 @@ def index():
         greeting=greeting
     )
 
-
-# ================= RUN =================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
-
-
-
